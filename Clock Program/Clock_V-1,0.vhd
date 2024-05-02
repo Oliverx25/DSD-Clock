@@ -42,5 +42,5 @@
     architecture Main of Clock is
     -- Señales a utilizar
     begin
-
+        
     end Main;
