@@ -40,7 +40,21 @@
     --                       Declaración de la arquitectura
     -- ========================================================================
     architecture Main of Clock is
-    -- Señales a utilizar
+        -- Declaración del componente
+        component frequency_divider is
+            port (
+                clk_in : in std_logic;
+                clk_out : out std_logic
+            );
+        end component frequency_divider;
+
+        -- Señales a utilizar
+        signal clk_1Hz : std_logic;
     begin
-        
+        -- Instanciación del componente
+        divider : frequency_divider
+            port map (
+                clk_in => CLK_50MHz, -- Asume que tienes una señal de reloj de 50MHz
+                clk_out => clk_1Hz
+            );
     end Main;
