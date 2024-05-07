@@ -1,4 +1,4 @@
--- Programa reloj 
+-- Programa reloj
 -- Elaborado por: Mejía Avianeda Avril Paola
 -- Versión: 0
 
@@ -20,14 +20,14 @@
 		-- Salidas
 			HEX0 : out std_logic_vector(6 downto 0);                   		-- Display HEX0 de 0x a 2x horas
 			HEX1 : out std_logic_vector(6 downto 0);                		-- Display HEX1 de x0 a x9 horas
-            HEX2 : out std_logic_vector(6 downto 0);		        		-- Display HEX2 de 0x a 5x minutos
-            HEX3 : out std_logic_vector(6 downto 0);		        		-- Display HEX3 de x0 a x9 minutos
-            HEX4 : out std_logic_vector(6 downto 0);		        		-- Display HEX4 de 0x a 5x segundos
-            HEX5 : out std_logic_vector(6 downto 0);		        		-- Display HEX5 de x0 a x9 segundos
+      HEX2 : out std_logic_vector(6 downto 0);		        		-- Display HEX2 de 0x a 5x minutos
+      HEX3 : out std_logic_vector(6 downto 0);		        		-- Display HEX3 de x0 a x9 minutos
+      HEX4 : out std_logic_vector(6 downto 0);		        		-- Display HEX4 de 0x a 5x segundos
+      HEX5 : out std_logic_vector(6 downto 0);		        		-- Display HEX5 de x0 a x9 segundos
 			LEDG8 : out std_logic											-- LED verde que enciende cada segundo
 		);
 	end entity;
-	
+
 -- *:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧
 -- 		Declaración de la arquitectura
 -- *:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧*:･ﾟ✧
@@ -39,7 +39,7 @@
 		constant max_freq : integer := 50_000_000;											-- Frecuencia del reloj de la tarjeta
 		constant med_freq : integer := max_freq/2;											-- El nombre lo dice
 		signal counter : integer range 0 to max_freq;										-- Para incrementar o decrementar en 1 cada pulso de reloj
-	
+
 	-- Asignación de segmentos para display
 		constant cero:		std_logic_vector(6 downto 0) := "1000000";		-- Constante para 0 en display
 		constant uno:		std_logic_vector(6 downto 0) := "1111001";		-- Constante para 1 en display
@@ -71,10 +71,10 @@
 				end case;
 			return hex;
 		end function;
-		
+
 	-- Declaración de los procesos
 		begin												-- Main de la arquitectura
-		
+
 		process (clk)										-- Para bajar la frecuencia a segundos (frecuencia de 1 Hz)
 			begin
 			if (rising_edge(clk)) then						-- Detecta cuando clk cambie de 0 a 1
@@ -90,7 +90,7 @@
 				end if;
 			end if;
 		end process;
-		
+
 		process (clk_h0, clr, set, new_hh, new_mm)			-- Implementación del reloj
 		-- Variables auxiliares internas
 			variable hh_0 : integer range 0 to 3;			-- Se le va a pasar a HEX0
@@ -111,7 +111,7 @@
 			else											-- Contador para el segundero
 				if (rising_edge(clk)) then					-- Detecta cuando clk cambie de 0 a 1
 					ss_1 := ss_1 + 1;						-- Aumenta cada segundo
-					clk_s1 <= '0';																		
+					clk_s1 <= '0';
 					if (ss_1 = 10) then						-- Para cuando llegue a los 09 segundos, pase a 10
 						ss_1 := 0;
 						clk_s1 <= '1';
