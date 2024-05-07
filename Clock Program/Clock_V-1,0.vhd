@@ -34,7 +34,7 @@
       Segments_Minute: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the minutes
       Segments_Second: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the seconds
       -- outputs LEDs
-      LED_Second        : out STD_LOGIC                       -- LED to indicate the seconds
+      LED_Second        : out STD_LOGIC;                       -- LED to indicate the seconds
       LED_Alarm_Sequence: out STD_LOGIC_VECTOR(3 downto 0)    -- Sequence of the alarm
     );
   end Clock;
