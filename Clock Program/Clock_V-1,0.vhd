@@ -16,25 +16,22 @@
   -- ========================================================================
   entity Clock is
     Port (
-      -- inputs Clock
+      -- input Clock
       clk   : in STD_LOGIC;                                   -- Clock
-      reset : in STD_LOGIC;                                   -- Reset
-
       -- inputs Switches
-      -- Pass of 2 switches to enable, to 1 switch, 0 -> Config-Alarm, 1 -> Config-Hour
       Enable : in STD_LOGIC;                                  -- Enable to change the time
-      -- ================================
       Modify_Minute : in STD_LOGIC_VECTOR(5 downto 0);        -- 2^6 > 60 (minuts)
       Modify_Hour   : in STD_LOGIC_VECTOR(4 downto 0);        -- 2^5 > 24 (hours)
       -- inputs Push Buttons
       Alarm_Save    : in STD_LOGIC;                           -- Save the alarm
+      reset         : in STD_LOGIC;                           -- Reset
 
       -- outputs Segments
       Segments_Hour  : out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the hours
       Segments_Minute: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the minutes
       Segments_Second: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the seconds
       -- outputs LEDs
-      LED_Second        : out STD_LOGIC;                       -- LED to indicate the seconds
+      LED_Second        : out STD_LOGIC;                      -- LED to indicate the seconds
       LED_Alarm_Sequence: out STD_LOGIC_VECTOR(3 downto 0)    -- Sequence of the alarm
     );
   end Clock;
@@ -93,7 +90,7 @@
 
     -- Function for convert binary to decimal
     function Bin2BCD(Binary: std_logic_vector) return std_logic_vector is
-    -- Variables de la función BCD
+    -- Variables for the function
     variable BCD_Return: std_logic_vector(7 downto 0) := (others => '0');
     variable Nibble_Unidades: std_logic_vector(3 downto 0) := (others => '0');
     variable Nibble_Decenas : std_logic_vector(3 downto 0) := (others => '0');
@@ -128,7 +125,8 @@
     -- Process to change the frecuency of the clock for 50,000,000 Hz to 1 Hz (1 second)
     Clock_Second : process(clk, reset)
     begin
-      if reset = '1' then
+      -- Push button are by default '1' (active low)
+      if reset = '0' then
         Counter_Clock <= 0;
         Pulse_1Hz <= '0';
       elsif rising_edge(clk) then
@@ -144,7 +142,8 @@
     -- Counters for the clock (hours, minutes, seconds)
     Clock_24_Hours : process(clk, reset, Enable, Pulse_1Hz)
     begin
-      if reset = '1' then
+      -- Push button are by default '1' (active low)
+      if reset = '0' then
         -- Reset the counters
         Counter_Second <= (others => '0');
         Counter_Minute <= (others => '0');
@@ -152,34 +151,37 @@
       elsif Enable = '1' then
         -- If the Enable is active (1), the clock is stopped and the time is modified
         Counter_Second <= (others => '0');
-        Counter_Minute <= Modify_Minute;
-        Counter_Hour   <= Modify_Hour;
+        -- Check the clock if any counter is greater than 59 or 23
+        Counter_Hour    <= (others => '0') when unsigned(Counter_Hour)    > 23 else Counter_Hour;
+        Counter_Minute  <= (others => '0') when unsigned(Counter_Minute)  > 59 else Counter_Minute;
       elsif rising_edge(clk) then
+        -- LED to indicate the seconds (1 Hz)
+        LED_Second <= Pulse_1Hz;
         -- If the Enable is inactive (0), the clock is running
         if Pulse_1Hz = '1' then
           -- Seconds
-          if unsigned(Counter_Second) > 59 then
+          if unsigned(Counter_Second) > 58 then
             Counter_Second <= (others => '0');
             -- Minutes
-            if unsigned(Counter_Minute) > 59 then
+            if unsigned(Counter_Minute) > 58 then
               Counter_Minute <= (others => '0');
               -- Hours
-              if unsigned(Counter_Hour) > 23 then
+              if unsigned(Counter_Hour) > 22 then
                 Counter_Hour <= (others => '0');
               else
+                -- Increase the hour
                 Counter_Hour <= std_logic_vector(unsigned(Counter_Hour) + 1);
               end if;
             else
+              -- Increase the minute
               Counter_Minute <= std_logic_vector(unsigned(Counter_Minute) + 1);
             end if;
           else
+            -- Increase the second
             Counter_Second <= std_logic_vector(unsigned(Counter_Second) + 1);
           end if;
-          LED_Second <= '1';  -- Led to indicate the seconds is on (Pulse_1Hz is '1')
-        else
-          LED_Second <= '0';  -- Led to indicate the seconds is off (Pulse_1Hz is '0')
         end if;
-        -- end if Pulse_1Hz or code block for the clock
+        -- end "if" Pulse_1Hz or code block for the clock
       end if;
 
       -- Assign the values to the 7-segment display
@@ -196,31 +198,42 @@
       Segments_Second(6 downto 0)  <= map_nibble_to_segment(Seconds_BCD(3 downto 0));
     end process Clock_24_Hours;
 
+  -- Create the states for the alarm sequence
+  type Alarm_Sequence_States is (Alarm_0, Alarm_1, Alarm_2);
+  signal Alarm_State : Alarm_Sequence_States := Alarm_0;
+
     -- Process to save the alarm and the sequence of the alarm
     Alarm : process(clk, Alarm_Save)
     begin
       -- Save the alarm on FLASH memory
       if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
+        -- Alarm_Minite and Alarm_Hour are signal, but the values need to be saved on FLASH memory
         Alarm_Minute <= Modify_Minute;
         Alarm_Hour   <= Modify_Hour;
         -- ????????????????????????????????????????????????
         -- Search the way to save the alarm on FLASH memory
         -- ????????????????????????????????????????????????
-      end if;
       -- Code block for the alarm sequence
-      if Counter_Hour = Alarm_Hour and Counter_Minute = Alarm_Minute then
-        if rising_edge(clk) then
-          if Pulse_1Hz = '1' then
-            LED_Alarm_Sequence(0) <= '1';
-            LED_Alarm_Sequence(1) <= '0';
-            LED_Alarm_Sequence(2) <= '1';
-            LED_Alarm_Sequence(3) <= '0';
-          else
-            LED_Alarm_Sequence(0) <= '0';
-            LED_Alarm_Sequence(1) <= '1';
-            LED_Alarm_Sequence(2) <= '0';
-            LED_Alarm_Sequence(3) <= '1';
-          end if;
+      elsif rising_edge(clk) then
+        if Pulse_1Hz = '1' then
+          -- Check the alarm
+          case Alarm_State is
+            when Alarm_0 =>
+              -- Continue pass to the next state for one minute
+              if Counter_Hour = Alarm_Hour and Counter_Minute = Alarm_Minute then
+                Alarm_State <= Alarm_1;
+              end if;
+            -- Sequence of the alarm
+            when Alarm_1 =>
+              LED_Alarm_Sequence <= "0110";
+              Alarm_State <= Alarm_2;
+            when Alarm_2 =>
+              LED_Alarm_Sequence <= "1001";
+              Alarm_State <= Alarm_0;
+            -- Default state
+            when others =>
+              Alarm_State <= Alarm_0;
+          end case;
         end if;
       end if;
     end process Alarm;
