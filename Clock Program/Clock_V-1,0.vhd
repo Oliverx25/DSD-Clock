@@ -54,6 +54,7 @@
     signal Alarm_Hour       : STD_LOGIC_VECTOR(4 downto 0) := "00000";          -- Alarm for the hours
       -- Clock of 1 Hz
     signal Pulse_1Hz        : STD_LOGIC := '0';                                 -- Pulse for 1 Hz
+    signal LED_Pulse        : STD_LOGIC := '0';                                 -- LED to indicate the pulse
     signal Counter_Clock    : natural := 0;                                     -- Counter for the clock
     constant Clk_frequency  : natural := 49999999;                              -- 50 MHz -> 0 to 49,999,999
       -- Create the states for the alarm sequence
@@ -68,7 +69,7 @@
     constant cuatro: STD_LOGIC_VECTOR(6 downto 0) := "0011001"; -- 4
     constant cinco:  STD_LOGIC_VECTOR(6 downto 0) := "0010010"; -- 5
     constant seis:   STD_LOGIC_VECTOR(6 downto 0) := "0000010"; -- 6
-    constant siete:  STD_LOGIC_VECTOR(6 downto 0) := "0111000"; -- 7
+    constant siete:  STD_LOGIC_VECTOR(6 downto 0) := "1111000"; -- 7
     constant ocho:   STD_LOGIC_VECTOR(6 downto 0) := "0000000"; -- 8
     constant nueve:  STD_LOGIC_VECTOR(6 downto 0) := "0011000"; -- 9
     constant N_D:    STD_LOGIC_VECTOR(6 downto 0) := "0000110"; -- Error (E)
@@ -143,6 +144,21 @@
       end if;
     end process Clock_Second;
 
+    -- process for the LED to indicate seconds
+    Clock_LED : process(clk, reset)
+    begin
+      -- Push button are by default '1' (active low)
+      if reset = '0' then
+        LED_Pulse <= '0';
+      elsif rising_edge(clk) then
+        if Counter_Clock < 9999999 then
+          LED_Pulse <= '1';
+        else
+          LED_Pulse <= '0';
+        end if;
+      end if;
+    end process Clock_LED;
+
     -- Counters for the clock (hours, minutes, seconds)
     Clock_24_Hours : process(clk, reset, Enable, Pulse_1Hz)
     begin
@@ -155,12 +171,18 @@
       elsif Enable = '1' then
         -- If the Enable is active (1), the clock is stopped and the time is modified
         Counter_Second <= (others => '0');
-        -- Check the clock if any counter is greater than 59 or 23
-        Counter_Hour    <= (others => '0') when unsigned(Counter_Hour)    > 23 else Counter_Hour;
-        Counter_Minute  <= (others => '0') when unsigned(Counter_Minute)  > 59 else Counter_Minute;
+        Counter_Hour <= Modify_Hour;
+        Counter_Minute <= Modify_Minute;
       elsif rising_edge(clk) then
+        -- Check the clock if any counter is greater than 59 or 23
+        if unsigned(Counter_Hour) > 23 then
+          Counter_Hour <= (others => '0');
+        end if;
+        if unsigned(Counter_Minute) > 59 then
+          Counter_Minute <= (others => '0');
+        end if;
         -- LED to indicate the seconds (1 Hz)
-        LED_Second <= Pulse_1Hz;
+        LED_Second <= LED_Pulse;
         -- If the Enable is inactive (0), the clock is running
         if Pulse_1Hz = '1' then
           -- Seconds
