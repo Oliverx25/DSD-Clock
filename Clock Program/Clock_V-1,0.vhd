@@ -57,18 +57,21 @@
     signal LED_Pulse        : STD_LOGIC := '0';                                 -- LED to indicate the pulse
     signal Counter_Clock    : natural := 0;                                     -- Counter for the clock
     constant Clk_frequency  : natural := 49999999;                              -- 50 MHz -> 0 to 49,999,999
+      -- Create the states for the alarm sequence
+    type Alarm_Sequence_States is (Alarm_0, Alarm_1);
+    signal Alarm_State : Alarm_Sequence_States := Alarm_0;
 
-    -- Component for the use of memory FLASH
-      -- Create the component for the memory FLASH
-    component Memory_Flash is
-      port (
-        clk_flash   : in STD_LOGIC;                                             -- Clock for the memory FLASH
-        reset_flash : in STD_LOGIC;                                             -- Reset for the memory FLASH
-        
-      );
-    end component Memory_Flash;
-      -- Maping the component for the memory FLASH
-    
+    -- -- Memory FLASH
+    --   -- Create the component for the memory FLASH
+    -- component Memory_Flash is
+    --   port (
+    --     clk_flash   : in STD_LOGIC;                                             -- Clock for the memory FLASH
+    --     reset_flash : in STD_LOGIC;                                             -- Reset for the memory FLASH
+    --
+    --   );
+    -- end component Memory_Flash;
+    --   -- Maping the component for the memory FLASH
+    --
 
     --  Constants for the 7-segment display
     constant cero:   STD_LOGIC_VECTOR(6 downto 0) := "1000000"; -- 0
@@ -243,14 +246,25 @@
         -- ????????????????????????????????????????????????
       -- Code block for the alarm sequence
       elsif rising_edge(clk) then
-        if Counter_Second = Alarm_Minute and Counter_Minute = Alarm_Hour then
-          if LED_Pulse = '1' then
-            LED_Alarm_Sequence <= "1001";
-          else
-            LED_Alarm_Sequence <= "0110";
-          end if;
-        else
-          LED_Alarm_Sequence <= "0000";
+        if Pulse_1Hz = '1' then
+          -- Check the alarm
+          case Alarm_State is
+            when Alarm_0 =>
+              -- Continue pass to the next state for one minute
+              if Counter_Hour = Alarm_Hour and Counter_Minute = Alarm_Minute then
+                LED_Alarm_Sequence <= "1001";
+                Alarm_State <= Alarm_1;
+              else
+                LED_Alarm_Sequence <= "0000";
+              end if;
+            -- Sequence of the alarm
+            when Alarm_1 =>
+              LED_Alarm_Sequence <= "0110";
+              Alarm_State <= Alarm_0;
+            -- Default state
+            when others =>
+              Alarm_State <= Alarm_0;
+          end case;
         end if;
       end if;
     end process Alarm;
