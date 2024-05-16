@@ -61,18 +61,6 @@
     type Alarm_Sequence_States is (Alarm_0, Alarm_1);
     signal Alarm_State : Alarm_Sequence_States := Alarm_0;
 
-    -- -- Memory FLASH
-    --   -- Create the component for the memory FLASH
-    -- component Memory_Flash is
-    --   port (
-    --     clk_flash   : in STD_LOGIC;                                             -- Clock for the memory FLASH
-    --     reset_flash : in STD_LOGIC;                                             -- Reset for the memory FLASH
-    --
-    --   );
-    -- end component Memory_Flash;
-    --   -- Maping the component for the memory FLASH
-    --
-
     --  Constants for the 7-segment display
     constant cero:   STD_LOGIC_VECTOR(6 downto 0) := "1000000"; -- 0
     constant uno:    STD_LOGIC_VECTOR(6 downto 0) := "1111001"; -- 1
@@ -241,9 +229,6 @@
         -- Alarm_Minite and Alarm_Hour are signal, but the values need to be saved on FLASH memory
         Alarm_Minute <= Modify_Minute;
         Alarm_Hour   <= Modify_Hour;
-        -- ????????????????????????????????????????????????
-        -- Search the way to save the alarm on FLASH memory
-        -- ????????????????????????????????????????????????
       -- Code block for the alarm sequence
       elsif rising_edge(clk) then
         if Pulse_1Hz = '1' then
