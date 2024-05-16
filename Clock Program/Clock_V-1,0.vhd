@@ -228,7 +228,15 @@
       if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
         -- Alarm_Minite and Alarm_Hour are signal, but the values need to be saved on FLASH memory
         Alarm_Minute <= Modify_Minute;
+        -- Check the alarm minute if is greater than 59
+        if unsigned(Modify_Minute) > 59 then
+          Alarm_Minute <= "000000";
+        end if;
         Alarm_Hour   <= Modify_Hour;
+        -- Check the alarm hour if is greater than 23
+        if unsigned(Modify_Hour) > 23 then
+          Alarm_Hour <= "00000";
+        end if;
       -- Code block for the alarm sequence
       elsif rising_edge(clk) then
         if Pulse_1Hz = '1' then
