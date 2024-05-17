@@ -1,7 +1,7 @@
 -- Practica 2 DSD - Reloj
--- Autores: Olvera Olvera Oliver Jesus
--- Fecha: 2024-04-21
--- Versión: 1.0
+-- Autores: Olvera Olvera Oliver Jesus y Mejía Avianeda Avril Paola <3
+-- Fecha: 2024-05-17
+-- Versión: 1.2
 
   -- ========================================================================
   --              Declaración de la librería y paquetes a utilizar
@@ -26,7 +26,17 @@
       Alarm_Save    : in STD_LOGIC;                           -- Save the alarm
       reset         : in STD_LOGIC;                           -- Reset
 
-      -- outputs Segments
+      -- FLASH Pin Assignments
+		FL_ADDR	: out			STD_LOGIC_VECTOR(22 downto 0);	-- Dirección de la memoria
+		FL_DQ			: inout	STD_LOGIC_VECTOR(7 downto 0);		-- Bus de datos
+		FL_CE_N		: out			STD_LOGIC;																-- Chip enable
+		FL_OE_N	: out			STD_LOGIC;																-- Output enable
+		FL_RST_N	: out			STD_LOGIC;																-- Reset
+		FL_RY			: in				STD_LOGIC;																-- Indica si está ocupado
+		FL_WE_N	: out			STD_LOGIC;																-- Habilitar escritura
+		FL_WP_N	: out			STD_LOGIC;																-- Protector escritura
+		
+		-- outputs Segments
       Segments_Hour  : out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the hours
       Segments_Minute: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the minutes
       Segments_Second: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the seconds
@@ -224,31 +234,41 @@
     -- Process to save the alarm and the sequence of the alarm
     Alarm : process(clk, reset)
     begin
-      -- Save the alarm on FLASH memory
+		-- Save the alarm on FLASH memory
       if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
         -- Alarm_Minite and Alarm_Hour are signal, but the values need to be saved on FLASH memory
         Alarm_Minute <= Modify_Minute;
+        -- Check the alarm minute if is greater than 59
+        if unsigned(Modify_Minute) > 59 then
+          Alarm_Minute <= "000000";
+        end if;
         Alarm_Hour   <= Modify_Hour;
-		  -- ????????????????????????????????????????????????
-        -- Search the way to save the alarm on FLASH memory
-        -- ????????????????????????????????????????????????
+        -- Check the alarm hour if is greater than 23
+        if unsigned(Modify_Hour) > 23 then
+          Alarm_Hour <= "00000";
+        end if;
       -- Code block for the alarm sequence
       elsif rising_edge(clk) then
-			if unsigned(Alarm_Hour) > 23 then
-          Alarm_Hour <= (others => '0');
-			end if;
-			if unsigned(Alarm_Minute) > 59 then
-          Alarm_Minute <= (others => '0');
-			end if;
-			if Counter_Minute = Alarm_Minute and Counter_Hour = Alarm_Hour then
-				if LED_Pulse = '1' then
-					LED_Alarm_Sequence <= "1001";
-				else
-					LED_Alarm_Sequence <= "0110";
-				end if;
-			else
-				LED_Alarm_Sequence <= "0000";
-			end if;
+        if Pulse_1Hz = '1' then
+          -- Check the alarm
+          case Alarm_State is
+            when Alarm_0 =>
+              -- Continue pass to the next state for one minute
+              if Counter_Hour = Alarm_Hour and Counter_Minute = Alarm_Minute then
+                LED_Alarm_Sequence <= "1001";
+                Alarm_State <= Alarm_1;
+              else
+                LED_Alarm_Sequence <= "0000";
+              end if;
+            -- Sequence of the alarm
+            when Alarm_1 =>
+              LED_Alarm_Sequence <= "0110";
+              Alarm_State <= Alarm_0;
+            -- Default state
+            when others =>
+              Alarm_State <= Alarm_0;
+          end case;
+        end if;
       end if;
     end process Alarm;
   end Main;
