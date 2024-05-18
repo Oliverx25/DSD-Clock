@@ -23,7 +23,7 @@
       Modify_Minute : in STD_LOGIC_VECTOR(5 downto 0);        -- 2^6 > 60 (minuts)
       Modify_Hour   : in STD_LOGIC_VECTOR(4 downto 0);        -- 2^5 > 24 (hours)
       -- inputs Push Buttons
-      Alarm_Save    : in STD_LOGIC;                           -- Save the alarm
+      Alarm_Save    : in STD_LOGIC;                           -- Save the alarm (Select confirmation)
       reset         : in STD_LOGIC;                           -- Reset
 
       -- outputs Segments
@@ -226,17 +226,26 @@
     begin
       -- Save the alarm on FLASH memory
       if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
-        -- Alarm_Minite and Alarm_Hour are signal, but the values need to be saved on FLASH memory
+      -- Signals that we need are: Alarm_Minute and Alarm_Hour, on that signals we write the values of the memory FLASH, that values are input's by ports (This ports arent declared right now, but we need to declare it on the top of the code).
+      -- The values are pre-saved on the memory FLASH, so we only need to read the values of the memory FLASH and assign it to the signals Alarm_Minute and Alarm_Hour.
+        -- To do that, we need to use the following ports of the memory FLASH: Chip Enable (CE -> set on 0), Output Enable (OE -> set on 0), Address (A, 21 to 0), Data Input/Output (DQ, 7 to 0).
+        -- We dont use the following ports: Write Enable (WE), Reset (RST); because we only need to read the values of the memory FLASH. Maybe we need to use the port RST, but we dont know yet.
+      -- Manage of the address of the memory FLASH will be done with the sentence case, since we need 2 addresses, one for the Alarm_Minute and the other for the Alarm_Hour. That addresses are: 0x000000 and 0x000001. That can be done with only one port address (0 and 1), and concatenate it with the address of the memory FLASH (0x000000). -> A(21 to 0) = 0x000000 + 0 = 0x000000 and 0x000000 + 1 = 0x000001.
+      -- Chip Enable (CE) and Output Enable (OE) are set on 0, because we need to read the values of the memory FLASH.
+      -- Data Input/Output (DQ) are the values that we need to read, so we need to assign it to the signals Alarm_Minute and Alarm_Hour. That port are the only one that will be declarade by input, the other are output.
+    -- We only access to set the alarm when the Enable is inactive (0), because we need to set the alarm when the clock is running. and the signal are rewrited only when the Alarm_Save is active (0). That in case we have many alarms, we only need to save the last alarm or the alarm that we need to set usign the sitwitches (Modify_Minute and Modify_Hour) to select the address of the memory FLASH for each alarm.
+
         Alarm_Minute <= Modify_Minute;
         -- Check the alarm minute if is greater than 59
         if unsigned(Modify_Minute) > 59 then
           Alarm_Minute <= "000000";
         end if;
-        Alarm_Hour   <= Modify_Hour;
+        Alarm_Hour <= Modify_Hour;
         -- Check the alarm hour if is greater than 23
         if unsigned(Modify_Hour) > 23 then
           Alarm_Hour <= "00000";
         end if;
+
       -- Code block for the alarm sequence
       elsif rising_edge(clk) then
         if Pulse_1Hz = '1' then
