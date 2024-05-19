@@ -239,14 +239,14 @@
         case Modify_Minute is   -- Use the input Modify_Minute to select the alarm to set
           -- Address pair for minutes, odd for hours
           when "000000" =>  -- Alarm 0
-            Address_Memory <= (others => '0') & Modify_Minute & "0";
+            Address_Memory <= "0000000000000000" & Modify_Minute & "0";
             Alarm_Minute <= Data_Queary(5 downto 0);
-            Address_Memory <= (others => '0') & Modify_Minute & "1";
+            Address_Memory <= "0000000000000000" & Modify_Minute & "1";
             Alarm_Hour <= Data_Queary(4 downto 0);
           when "000001" =>  -- Alarm 1
-            Address_Memory <= (others => '0') & Modify_Minute & "0";
+            Address_Memory <= "0000000000000000" & Modify_Minute & "0";
             Alarm_Minute <= Data_Queary(5 downto 0);
-            Address_Memory <= (others => '0') & Modify_Minute & "1";
+            Address_Memory <= "0000000000000000" & Modify_Minute & "1";
             Alarm_Hour <= Data_Queary(4 downto 0);
           when others =>    -- Default state
             Alarm_Minute <= "000000";
