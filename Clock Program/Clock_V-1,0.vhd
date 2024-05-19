@@ -235,33 +235,23 @@
     begin
       -- Set the alarm by FLASH memory
       if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
-      -- //$ Signals that we need are: Alarm_Minute and Alarm_Hour, on that signals we write the values of the memory FLASH, that values are inputs by ports.
-      -- //^ The values are pre-saved on the memory FLASH, so we only need to read the values of the memory FLASH and assign it to the signals Alarm_Minute and Alarm_Hour.
-        -- //// To do that, we need to use the following ports of the memory FLASH: Chip Enable (CE -> set on 0), Output Enable (OE -> set on 0), Address (A, 22 to 0), Data Input/Output (DQ, 7 to 0).
-        -- //// We dont use the following ports: Write Enable (WE), Reset (RST); because we only need to read the values of the memory FLASH. Maybe we need to use the port RST, but we dont know yet.
-      -- //$ Manage of the address of the memory FLASH will be done with the sentence case, since we need 2 addresses, one for the Alarm_Minute and the other for the Alarm_Hour.
-        -- //? That addresses are: 0x00000000000000000000000 for the Alarm_Minute and 0x00000000000000000000001 for the Alarm_Hour. The mount of addresses are 8MB, so we need 23 bits for the address (2^23 = 8MB).
-        -- //? Each byte have 8 bits, so we need 2 addresses for the values of the alarm.
-      -- //// Chip Enable (CE) and Output Enable (OE) are set on 0, because we need to read the values of the memory FLASH.
-      -- //// Data Input/Output (DQ) are the values that we need to read, so we need to assign it to the signals Alarm_Minute and Alarm_Hour. That port are the only one that will be declarade by input, the other are output.
-    -- //* We only access to set the alarm when the Enable is inactive (0), because we need to set the alarm when the clock is running. and the signal are rewrited only when the Alarm_Save is active (0). That in case we have many alarms, we only need to save the last alarm or the alarm that we need to set usign the sitwitches (Modify_Minute and Modify_Hour) to select the address of the memory FLASH for each alarm.
       -- Select the alarm to set
         case Modify_Minute is   -- Use the input Modify_Minute to select the alarm to set
+          -- Address pair for minutes, odd for hours
           when "000000" =>  -- Alarm 0
-            Address_Memory <= "0000000000000000000000" & "0";  -- Address for the Alarm_Minute 0
+            Address_Memory <= (others => '0') & Modify_Minute & "0";
             Alarm_Minute <= Data_Queary(5 downto 0);
-            Address_Memory <= "0000000000000000000000" & "1";  -- Address for the Alarm_Hour 0
+            Address_Memory <= (others => '0') & Modify_Minute & "1";
             Alarm_Hour <= Data_Queary(4 downto 0);
           when "000001" =>  -- Alarm 1
-            Address_Memory <= "0000000000000000000001" & "0";  -- Address for the Alarm_Minute 1
+            Address_Memory <= (others => '0') & Modify_Minute & "0";
             Alarm_Minute <= Data_Queary(5 downto 0);
-            Address_Memory <= "0000000000000000000001" & "1";  -- Address for the Alarm_Hour 1
+            Address_Memory <= (others => '0') & Modify_Minute & "1";
             Alarm_Hour <= Data_Queary(4 downto 0);
           when others =>    -- Default state
             Alarm_Minute <= "000000";
             Alarm_Hour <= "00000";
         end case;
-
       -- Code block for the alarm sequence
       elsif rising_edge(clk) then
         if Pulse_1Hz = '1' then
