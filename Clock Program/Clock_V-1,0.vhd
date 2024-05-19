@@ -1,7 +1,7 @@
 -- Practica 2 DSD - Reloj
 -- Autores: Olvera Olvera Oliver Jesus
 -- Fecha: 2024-04-21
--- Versión: 1.0
+-- Versión: 1.5
 
   -- ========================================================================
   --              Declaración de la librería y paquetes a utilizar
@@ -17,14 +17,16 @@
   entity Clock is
     Port (
       -- input Clock
-      clk   : in STD_LOGIC;                                   -- Clock
+      clk           : in STD_LOGIC;                           -- Clock
       -- inputs Switches
-      Enable : in STD_LOGIC;                                  -- Enable to change the time
+      Enable        : in STD_LOGIC;                           -- Enable to change the time
       Modify_Minute : in STD_LOGIC_VECTOR(5 downto 0);        -- 2^6 > 60 (minuts)
       Modify_Hour   : in STD_LOGIC_VECTOR(4 downto 0);        -- 2^5 > 24 (hours)
       -- inputs Push Buttons
       Alarm_Save    : in STD_LOGIC;                           -- Save the alarm (Select confirmation)
       reset         : in STD_LOGIC;                           -- Reset
+      -- input Memory FLASH
+      Data_Queary   : in STD_LOGIC_VECTOR(7 downto 0);        -- Data from the memory FLASH
 
       -- outputs Segments
       Segments_Hour  : out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the hours
@@ -33,6 +35,10 @@
       -- outputs LEDs
       LED_Second        : out STD_LOGIC;                      -- LED to indicate the seconds
       LED_Alarm_Sequence: out STD_LOGIC_VECTOR(3 downto 0)    -- Sequence of the alarm
+      -- outputs Memory FLASH
+      Chip_Enable       : out STD_LOGIC;                      -- Chip Enable
+      Output_Enable     : out STD_LOGIC;                      -- Output Enable
+      Address_Memory    : out STD_LOGIC_VECTOR(1 downto 0);   -- Address of the memory FLASH
     );
   end Clock;
 
@@ -221,10 +227,10 @@
       Segments_Second(6 downto 0)  <= map_nibble_to_segment(Seconds_BCD(3 downto 0));
     end process Clock_24_Hours;
 
-    -- Process to save the alarm and the sequence of the alarm
+    -- Process to set the alarm and the sequence of the alarm
     Alarm : process(clk, reset)
     begin
-      -- Save the alarm on FLASH memory
+      -- Set the alarm by FLASH memory
       if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
       -- Signals that we need are: Alarm_Minute and Alarm_Hour, on that signals we write the values of the memory FLASH, that values are input's by ports (This ports arent declared right now, but we need to declare it on the top of the code).
       -- The values are pre-saved on the memory FLASH, so we only need to read the values of the memory FLASH and assign it to the signals Alarm_Minute and Alarm_Hour.
