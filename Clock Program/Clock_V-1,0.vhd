@@ -34,11 +34,11 @@
       Segments_Second: out STD_LOGIC_VECTOR(13 downto 0);     -- 7 display segments for the seconds
       -- outputs LEDs
       LED_Second        : out STD_LOGIC;                      -- LED to indicate the seconds
-      LED_Alarm_Sequence: out STD_LOGIC_VECTOR(3 downto 0)    -- Sequence of the alarm
+      LED_Alarm_Sequence: out STD_LOGIC_VECTOR(3 downto 0);   -- Sequence of the alarm
       -- outputs Memory FLASH
       Chip_Enable       : out STD_LOGIC;                      -- Chip Enable
       Output_Enable     : out STD_LOGIC;                      -- Output Enable
-      Address_Memory    : out STD_LOGIC_VECTOR(22 downto 0);  -- Address of the memory FLASH
+      Address_Memory    : out STD_LOGIC_VECTOR(22 downto 0)   -- Address of the memory FLASH
     );
   end Clock;
 
@@ -230,14 +230,26 @@
       Segments_Second(6 downto 0)  <= map_nibble_to_segment(Seconds_BCD(3 downto 0));
     end process Clock_24_Hours;
 
+    -- Process to set the alarm
+    Alarm_Set_Minute : process(clk, reset, Data_Queary)
+      begin
+        Address_Memory <= "000000000000000000000000";
+        wait until rising_edge(clk);
+        Alarm_Minute <= Data_Queary;
+        wait;
+    end process Alarm_Set_Minute;
+
+    Alarm_Set_Hour : process(clk, reset, Data_Queary)
+      begin
+        Address_Memory <= "000000000000000000000001";
+        wait until rising_edge(clk);
+        Alarm_Hour <= Data_Queary;
+        wait;
+    end process Alarm_Set_Hour;
+
     -- Process to set the alarm and the sequence of the alarm
     Alarm : process(clk, reset, Data_Queary)
     begin
-      -- Set the alarm by FLASH memory
-      Address_Memory <= "0000000000000000000000" & "0";
-      Alarm_Minute <= Data_Queary;
-      Address_Memory <= "0000000000000000000000" & "1";
-      Alarm_Hour <= Data_Queary;
       -- Code block for the alarm sequence
       if rising_edge(clk) then
         if Pulse_1Hz = '1' then
