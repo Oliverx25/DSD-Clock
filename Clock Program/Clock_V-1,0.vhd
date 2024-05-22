@@ -232,19 +232,26 @@
       Segments_Second(6 downto 0)  <= map_nibble_to_segment(Seconds_BCD(3 downto 0));
     end process Clock_24_Hours;
 
+    -- Process to set the alarm
+    type State_Type is (SET_MINUTE, SET_HOUR);
+    signal State : State_Type;
+
     Alarm_Set : process(clk, reset)
-      variable isMinute : boolean := true;
     begin
-      if rising_edge(clk) then
+      if reset = '1' then
+        State <= SET_MINUTE;
+      elsif rising_edge(clk) then
         if Pulse_1Hz = '1' then
-          if isMinute then
-            Address_Memory <= "00000000000000000000000";
-            Alarm_Minute <= Data_Queary;
-          else
-            Address_Memory <= "00000000000000000000001";
-            Alarm_Hour <= Data_Queary;
-          end if;
-          isMinute := not isMinute;
+          case State is
+            when SET_MINUTE =>
+              Address_Memory <= "00000000000000000000000";
+              Alarm_Minute <= Data_Queary;
+              State <= SET_HOUR;
+            when SET_HOUR =>
+              Address_Memory <= "00000000000000000000001";
+              Alarm_Hour <= Data_Queary;
+              State <= SET_MINUTE;
+          end case;
         end if;
       end if;
       comp <= Data_Queary;
