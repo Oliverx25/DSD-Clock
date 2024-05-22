@@ -230,22 +230,20 @@
       Segments_Second(6 downto 0)  <= map_nibble_to_segment(Seconds_BCD(3 downto 0));
     end process Clock_24_Hours;
 
-    -- Process to set the alarm
-    Alarm_Set_Minute : process(clk, reset, Data_Queary)
-      begin
-        Address_Memory <= "000000000000000000000000";
-        wait until rising_edge(clk);
-        Alarm_Minute <= Data_Queary;
-        wait;
-    end process Alarm_Set_Minute;
-
-    Alarm_Set_Hour : process(clk, reset, Data_Queary)
-      begin
-        Address_Memory <= "000000000000000000000001";
-        wait until rising_edge(clk);
-        Alarm_Hour <= Data_Queary;
-        wait;
-    end process Alarm_Set_Hour;
+    Alarm_Set : process(clk, reset)
+      variable isMinute : boolean := true;
+    begin
+      if rising_edge(clk) then
+        if isMinute then
+          Address_Memory <= "000000000000000000000000";
+          Alarm_Minute <= Data_Queary;
+        else
+          Address_Memory <= "000000000000000000000001";
+          Alarm_Hour <= Data_Queary;
+        end if;
+        isMinute := not isMinute;
+      end if;
+    end process Alarm_Set;
 
     -- Process to set the alarm and the sequence of the alarm
     Alarm : process(clk, reset, Data_Queary)
