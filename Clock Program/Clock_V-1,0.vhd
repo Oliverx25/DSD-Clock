@@ -235,10 +235,10 @@
     begin
       if rising_edge(clk) then
         if isMinute then
-          Address_Memory <= "000000000000000000000000";
+          Address_Memory <= "00000000000000000000000";
           Alarm_Minute <= Data_Queary;
         else
-          Address_Memory <= "000000000000000000000001";
+          Address_Memory <= "00000000000000000000001";
           Alarm_Hour <= Data_Queary;
         end if;
         isMinute := not isMinute;
