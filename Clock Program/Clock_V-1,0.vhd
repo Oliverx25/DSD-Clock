@@ -39,6 +39,8 @@
       Chip_Enable       : out STD_LOGIC;                      -- Chip Enable
       Output_Enable     : out STD_LOGIC;                      -- Output Enable
       Address_Memory    : out STD_LOGIC_VECTOR(22 downto 0)   -- Address of the memory FLASH
+
+      comp : out STD_LOGIC_VECTOR(7 downto 0)                 -- comprobation for the memory FLASH
     );
   end Clock;
 
@@ -234,19 +236,22 @@
       variable isMinute : boolean := true;
     begin
       if rising_edge(clk) then
-        if isMinute then
-          Address_Memory <= "00000000000000000000000";
-          Alarm_Minute <= Data_Queary;
-        else
-          Address_Memory <= "00000000000000000000001";
-          Alarm_Hour <= Data_Queary;
+        if Pulse_1Hz = '1' then
+          if isMinute then
+            Address_Memory <= "00000000000000000000000";
+            Alarm_Minute <= Data_Queary;
+          else
+            Address_Memory <= "00000000000000000000001";
+            Alarm_Hour <= Data_Queary;
+          end if;
+          isMinute := not isMinute;
         end if;
-        isMinute := not isMinute;
       end if;
     end process Alarm_Set;
+    comp <= Data_Queary;
 
     -- Process to set the alarm and the sequence of the alarm
-    Alarm : process(clk, reset, Data_Queary)
+    Alarm : process(clk, reset)
     begin
       -- Code block for the alarm sequence
       if rising_edge(clk) then
