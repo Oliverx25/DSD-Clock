@@ -56,8 +56,8 @@
     signal Minutes_BCD      : STD_LOGIC_VECTOR(7 downto 0) := (others => '0');  -- BCD for the minutes
     signal Seconds_BCD      : STD_LOGIC_VECTOR(7 downto 0) := (others => '0');  -- BCD for the seconds
       -- Alarm
-    signal Alarm_Minute     : STD_LOGIC_VECTOR(5 downto 0) := "000000";         -- Alarm for the minutes
-    signal Alarm_Hour       : STD_LOGIC_VECTOR(4 downto 0) := "00000";          -- Alarm for the hours
+    signal Alarm_Minute     : STD_LOGIC_VECTOR(7 downto 0) := (others => '0');  -- Alarm for the minutes
+    signal Alarm_Hour       : STD_LOGIC_VECTOR(7 downto 0) := (others => '0');  -- Alarm for the hours
       -- Clock of 1 Hz
     signal Pulse_1Hz        : STD_LOGIC := '0';                                 -- Pulse for 1 Hz
     signal LED_Pulse        : STD_LOGIC := '0';                                 -- LED to indicate the pulse
@@ -231,35 +231,21 @@
     end process Clock_24_Hours;
 
     -- Process to set the alarm and the sequence of the alarm
-    Alarm : process(clk, reset)
+    Alarm : process(clk, reset, Data_Queary)
     begin
       -- Set the alarm by FLASH memory
-      if Alarm_Save = '0' and Enable = '0' then -- Push button are by default '1' (active low)
-      -- Select the alarm to set
-        case Modify_Minute is   -- Use the input Modify_Minute to select the alarm to set
-          -- Address pair for minutes, odd for hours
-          when "000000" =>  -- Alarm 0
-            Address_Memory <= "0000000000000000" & Modify_Minute & "0";
-            Alarm_Minute <= Data_Queary(5 downto 0);
-            Address_Memory <= "0000000000000000" & Modify_Minute & "1";
-            Alarm_Hour <= Data_Queary(4 downto 0);
-          when "000001" =>  -- Alarm 1
-            Address_Memory <= "0000000000000000" & Modify_Minute & "0";
-            Alarm_Minute <= Data_Queary(5 downto 0);
-            Address_Memory <= "0000000000000000" & Modify_Minute & "1";
-            Alarm_Hour <= Data_Queary(4 downto 0);
-          when others =>    -- Default state
-            Alarm_Minute <= "000000";
-            Alarm_Hour <= "00000";
-        end case;
+      Address_Memory <= "0000000000000000000000" & "0";
+      Alarm_Minute <= Data_Queary;
+      Address_Memory <= "0000000000000000000000" & "1";
+      Alarm_Hour <= Data_Queary;
       -- Code block for the alarm sequence
-      elsif rising_edge(clk) then
+      if rising_edge(clk) then
         if Pulse_1Hz = '1' then
           -- Check the alarm
           case Alarm_State is
             when Alarm_0 =>
               -- Continue pass to the next state for one minute
-              if Counter_Hour = Alarm_Hour and Counter_Minute = Alarm_Minute then
+              if Counter_Hour = Alarm_Hour(4 downto 0) and Counter_Minute = Alarm_Minute(5 downto 0) then
                 LED_Alarm_Sequence <= "1001";
                 Alarm_State <= Alarm_1;
               else
