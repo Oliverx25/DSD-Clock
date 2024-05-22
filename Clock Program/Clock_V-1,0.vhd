@@ -247,8 +247,8 @@
           isMinute := not isMinute;
         end if;
       end if;
+      comp <= Data_Queary;
     end process Alarm_Set;
-    comp <= Data_Queary;
 
     -- Process to set the alarm and the sequence of the alarm
     Alarm : process(clk, reset)
